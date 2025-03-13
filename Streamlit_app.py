@@ -68,5 +68,10 @@ st.subheader("Cashflow Projection")
 df["Cashflow Date"] = pd.to_datetime(df["Cashflow Date"])
 df["Month"] = df["Cashflow Date"].dt.strftime('%Y-%m')
 cashflow_df = df.groupby("Month")["Revenue"].sum().reset_index()
-fig = px.bar(cashflow_df, x="Month", y="Revenue", title="Projected Monthly Cashflow", labels={"Revenue": "Projected Revenue ($)"})
+fig = px.bar(
+    cashflow_df, x="Month", y="Revenue", title="Projected Monthly Cashflow", 
+    labels={"Revenue": "Projected Revenue ($)"},
+    text_auto=True  # Show values on top of bars
+)
+fig.update_traces(textfont_size=12, textposition="outside")  # Format text appearance
 st.plotly_chart(fig, use_container_width=True)
