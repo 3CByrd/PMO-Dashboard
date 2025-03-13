@@ -51,8 +51,22 @@ if pm_filter != "All":
 st.subheader("Project Data")
 st.dataframe(df, use_container_width=True)
 
+# Display Totals & Averages
+st.markdown("### Summary")
+total_revenue = df["Revenue"].sum()
+avg_gm = df["GM%"].mean()
+avg_wip = df["WIP%"].mean()
+avg_budget_spent = df["Budget Spent%"].mean()
+
+st.write(f"**Total Revenue:** ${total_revenue:,.2f}")
+st.write(f"**Average GM%:** {avg_gm:.2f}%")
+st.write(f"**Average WIP%:** {avg_wip:.2f}%")
+st.write(f"**Average Budget Spent%:** {avg_budget_spent:.2f}%")
+
 # Cashflow Projection Chart
 st.subheader("Cashflow Projection")
-cashflow_df = df.groupby("Cashflow Date")["Revenue"].sum().reset_index()
-fig = px.bar(cashflow_df, x="Cashflow Date", y="Revenue", title="Projected Cashflow", labels={"Revenue": "Projected Revenue ($)"})
+df["Cashflow Date"] = pd.to_datetime(df["Cashflow Date"])
+df["Month"] = df["Cashflow Date"].dt.strftime('%Y-%m')
+cashflow_df = df.groupby("Month")["Revenue"].sum().reset_index()
+fig = px.bar(cashflow_df, x="Month", y="Revenue", title="Projected Monthly Cashflow", labels={"Revenue": "Projected Revenue ($)"})
 st.plotly_chart(fig, use_container_width=True)
