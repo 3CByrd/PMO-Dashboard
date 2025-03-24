@@ -72,26 +72,26 @@ st.subheader("Activity KPIs")
 
 st.write("### Opportunities Created")
 st.dataframe(opp_created, use_container_width=True)
-fig = px.bar(opp_created, x=pd.to_datetime(opp_created["Creation Date"]).dt.strftime('%B'), y=opp_created.groupby("Creation Date")["PM"].count().values,
-             color="PM", barmode='group', title="Opportunities Created Per PM Per Month")
+opp_count_pm = opp_created.groupby([pd.to_datetime(opp_created["Creation Date"]).dt.strftime('%B'), "PM"]).size().reset_index(name="Count")
+fig = px.bar(opp_count_pm, x="Creation Date", y="Count", color="PM", barmode='group', title="Opportunities Created Per PM Per Month")
 st.plotly_chart(fig, use_container_width=True)
-fig = px.bar(opp_created, x=pd.to_datetime(opp_created["Creation Date"]).dt.strftime('%B'), y=opp_created.groupby("Creation Date")["Market Tag"].count().values,
-             color="Market Tag", barmode='group', title="Opportunities Created Per Market Tag Per Month")
+opp_count_market = opp_created.groupby([pd.to_datetime(opp_created["Creation Date"]).dt.strftime('%B'), "Market Tag"]).size().reset_index(name="Count")
+fig = px.bar(opp_count_market, x="Creation Date", y="Count", color="Market Tag", barmode='group', title="Opportunities Created Per Market Tag Per Month")
 st.plotly_chart(fig, use_container_width=True)
 
 st.write("### Opportunities Lost")
 st.dataframe(opp_lost, use_container_width=True)
-fig = px.bar(opp_lost, x=pd.to_datetime(opp_lost["Creation Date"]).dt.strftime('%B'), y=opp_lost.groupby("Creation Date")["PM"].count().values,
-             color="PM", barmode='group', title="Opportunities Lost Per PM Per Month")
+opp_lost_pm = opp_lost.groupby([pd.to_datetime(opp_lost["Creation Date"]).dt.strftime('%B'), "PM"]).size().reset_index(name="Count")
+fig = px.bar(opp_lost_pm, x="Creation Date", y="Count", color="PM", barmode='group', title="Opportunities Lost Per PM Per Month")
 st.plotly_chart(fig, use_container_width=True)
-fig = px.bar(opp_lost, x=pd.to_datetime(opp_lost["Creation Date"]).dt.strftime('%B'), y=opp_lost.groupby("Creation Date")["Market Tag"].count().values,
-             color="Market Tag", barmode='group', title="Opportunities Lost Per Market Tag Per Month")
+opp_lost_market = opp_lost.groupby([pd.to_datetime(opp_lost["Creation Date"]).dt.strftime('%B'), "Market Tag"]).size().reset_index(name="Count")
+fig = px.bar(opp_lost_market, x="Creation Date", y="Count", color="Market Tag", barmode='group', title="Opportunities Lost Per Market Tag Per Month")
 st.plotly_chart(fig, use_container_width=True)
 
 st.write("### Sales Orders Created")
 st.dataframe(sales_orders, use_container_width=True)
-fig = px.bar(sales_orders, x=pd.to_datetime(sales_orders["Creation Date"]).dt.strftime('%B'), y=sales_orders["Revenue"].sum(),
-             title="Total Sales Orders Revenue Per Month", text_auto=True)
+sales_revenue = sales_orders.groupby(pd.to_datetime(sales_orders["Creation Date"]).dt.strftime('%B'))["Revenue"].sum().reset_index()
+fig = px.bar(sales_revenue, x="Creation Date", y="Revenue", title="Total Sales Orders Revenue Per Month", text_auto=True)
 st.plotly_chart(fig, use_container_width=True)
 
 # Financial Compliance
@@ -99,7 +99,7 @@ st.subheader("Financial Compliance")
 financial_tasks = generate_activity_data(30, "2025-01-01", "2025-03-31")
 financial_tasks["Task Type"] = np.random.choice(["Invoice", "Vendor Bill", "Forecast", "Due Date", "Closing"], 30)
 st.dataframe(financial_tasks, use_container_width=True)
-fig = px.bar(financial_tasks, x="PM", color="PM", title="Total Tasks Per PM")
+fig = px.bar(financial_tasks, x="PM", y=financial_tasks.groupby("PM").size().reset_index(name="Count")["Count"], color="PM", title="Total Tasks Per PM")
 st.plotly_chart(fig, use_container_width=True)
-fig = px.bar(financial_tasks, x="Task Type", color="Task Type", title="Total Tasks Per Task Type")
+fig = px.bar(financial_tasks, x="Task Type", y=financial_tasks.groupby("Task Type").size().reset_index(name="Count")["Count"], color="Task Type", title="Total Tasks Per Task Type")
 st.plotly_chart(fig, use_container_width=True)
