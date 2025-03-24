@@ -57,22 +57,6 @@ def generate_sales_orders(num_records, start_date, end_date):
     sales_data["GM%"] = np.round(np.random.uniform(30, 40, num_records), 2)
     return sales_data
 
-def generate_market_turnover(num_records, start_date, end_date):
-    market_tags = ["Retail", "QSR", "Petroleum", "Wholesale", "One-off", "Service"]
-    data = []
-    for _ in range(num_records):
-        market = np.random.choice(market_tags)
-        opp_to_so = np.random.randint(5, 180)
-        so_to_close = np.random.randint(30, 120)
-        data.append({
-            "Market Tag": market,
-            "Opportunity to SO Conversion (Days)": opp_to_so,
-            "SO Conversion to Closing (Days)": so_to_close,
-            "Total Project Life (Days)": opp_to_so + so_to_close
-        })
-    
-    return pd.DataFrame(data)
-
 # Streamlit UI
 st.set_page_config(layout="wide", page_title="Active Projects Dashboard")
 st.title("📊 Active Projects Dashboard")
@@ -82,13 +66,42 @@ df = generate_projects()
 opp_created = generate_activity_data(100, "2025-01-01", "2025-03-31")
 opp_lost = generate_activity_data(33, "2025-01-01", "2025-03-31")
 sales_orders = generate_sales_orders(90, "2025-01-01", "2025-03-31")
-market_turnover = generate_market_turnover(100, "2025-01-01", "2025-03-31")
 
-# Market Turnover Table
-st.subheader("Market Turnover Table")
-st.dataframe(market_turnover, use_container_width=True)
+# Display Activity KPIs
+st.subheader("Activity KPIs")
 
-# Market Turnover Summary
-turnover_summary = market_turnover.groupby("Market Tag").mean().reset_index()
-st.write("### Market Turnover Summary")
-st.dataframe(turnover_summary, use_container_width=True)
+st.write("### Opportunities Created")
+st.dataframe(opp_created, use_container_width=True)
+opp_count_pm = opp_created.groupby([pd.to_datetime(opp_created["Creation Date"]).dt.strftime('%B'), "PM"]).size().reset_index(name="Count")
+fig = px.bar(opp_count_pm, x="Creation Date", y="Count", color="PM", barmode='group', title="Opportunities Created Per PM Per Month")
+st.plotly_chart(fig, use_container_width=True)
+opp_count_market = opp_created.groupby([pd.to_datetime(opp_created["Creation Date"]).dt.strftime('%B'), "Market Tag"]).size().reset_index(name="Count")
+fig = px.bar(opp_count_market, x="Creation Date", y="Count", color="Market Tag", barmode='group', title="Opportunities Created Per Market Tag Per Month")
+st.plotly_chart(fig, use_container_width=True)
+
+st.write("### Opportunities Lost")
+st.dataframe(opp_lost, use_container_width=True)
+opp_lost_pm = opp_lost.groupby([pd.to_datetime(opp_lost["Creation Date"]).dt.strftime('%B'), "PM"]).size().reset_index(name="Count")
+fig = px.bar(opp_lost_pm, x="Creation Date", y="Count", color="PM", barmode='group', title="Opportunities Lost Per PM Per Month")
+st.plotly_chart(fig, use_container_width=True)
+opp_lost_market = opp_lost.groupby([pd.to_datetime(opp_lost["Creation Date"]).dt.strftime('%B'), "Market Tag"]).size().reset_index(name="Count")
+fig = px.bar(opp_lost_market, x="Creation Date", y="Count", color="Market Tag", barmode='group', title="Opportunities Lost Per Market Tag Per Month")
+st.plotly_chart(fig, use_container_width=True)
+
+st.write("### Sales Orders Created")
+st.dataframe(sales_orders, use_container_width=True)
+sales_revenue = sales_orders.groupby(pd.to_datetime(sales_orders["Creation Date"]).dt.strftime('%B'))["Revenue"].sum().reset_index()
+fig = px.bar(sales_revenue, x="Creation Date", y="Revenue", title="Total Sales Orders Revenue Per Month", text_auto=True)
+st.plotly_chart(fig, use_container_width=True)
+
+# Financial Compliance
+st.subheader("Financial Compliance")
+financial_tasks = generate_activity_data(30, "2025-01-01", "2025-03-31")
+financial_tasks["Task Type"] = np.random.choice(["Invoice", "Vendor Bill", "Forecast", "Due Date", "Closing"], 30)
+st.dataframe(financial_tasks, use_container_width=True)
+task_summary = financial_tasks.groupby("PM").size().reset_index(name="Count")
+fig = px.bar(task_summary, x="PM", y="Count", color="PM", title="Total Tasks Per PM")
+st.plotly_chart(fig, use_container_width=True)
+task_type_summary = financial_tasks.groupby("Task Type").size().reset_index(name="Count")
+fig = px.bar(task_type_summary, x="Task Type", y="Count", color="Task Type", title="Total Tasks Per Task Type")
+st.plotly_chart(fig, use_container_width=True)
