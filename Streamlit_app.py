@@ -35,12 +35,36 @@ def generate_projects():
     
     return pd.DataFrame(projects)
 
+def generate_activity_data(num_records, start_date, end_date):
+    pm_names = ["Alice", "Bob", "Charlie", "David", "Eve"]
+    market_tags = ["Retail", "QSR", "Petroleum", "Wholesale", "One-off", "Service"]
+    dates = pd.date_range(start=start_date, end=end_date).tolist()
+    data = []
+    
+    for _ in range(num_records):
+        data.append({
+            "Creation Date": np.random.choice(dates).strftime('%Y-%m-%d'),
+            "PM": np.random.choice(pm_names),
+            "Market Tag": np.random.choice(market_tags)
+        })
+    
+    return pd.DataFrame(data)
+
+def generate_sales_orders(num_records, start_date, end_date):
+    sales_data = generate_activity_data(num_records, start_date, end_date)
+    sales_data["Revenue"] = np.random.randint(2500, 150000, num_records)
+    sales_data["GM%"] = np.round(np.random.uniform(30, 40, num_records), 2)
+    return sales_data
+
 # Streamlit UI
 st.set_page_config(layout="wide", page_title="Active Projects Dashboard")
 st.title("📊 Active Projects Dashboard")
 
 # Load Data
 df = generate_projects()
+opp_created = generate_activity_data(100, "2025-01-01", "2025-03-31")
+opp_lost = generate_activity_data(33, "2025-01-01", "2025-03-31")
+sales_orders = generate_sales_orders(90, "2025-01-01", "2025-03-31")
 
 # Filters
 pm_filter = st.selectbox("Filter by Project Manager", ["All"] + df["PM"].unique().tolist())
@@ -71,7 +95,31 @@ cashflow_df = df.groupby("Month")["Revenue"].sum().reset_index()
 fig = px.bar(
     cashflow_df, x="Month", y="Revenue", title="Projected Monthly Cashflow", 
     labels={"Revenue": "Projected Revenue ($)"},
-    text_auto=True  # Show values on top of bars
+    text_auto=True
 )
-fig.update_traces(textfont_size=12, textposition="outside")  # Format text appearance
+fig.update_traces(textfont_size=12, textposition="outside")
 st.plotly_chart(fig, use_container_width=True)
+
+# Activity Section
+st.subheader("Activity KPIs")
+st.write("### Opportunities Created")
+st.dataframe(opp_created, use_container_width=True)
+
+st.write("### Opportunities Lost")
+st.dataframe(opp_lost, use_container_width=True)
+
+st.write("### Sales Orders Created")
+st.dataframe(sales_orders, use_container_width=True)
+
+# Financial Compliance Section
+st.subheader("Financial Compliance")
+financial_tasks = generate_activity_data(30, "2025-01-01", "2025-03-31")
+st.dataframe(financial_tasks, use_container_width=True)
+
+# Revenue Forecast Section
+st.subheader("Revenue Forecast")
+forecast_data = generate_sales_orders(5, "2025-03-01", "2025-03-31")
+forecast_data["Forecasted Revenue"] = np.random.randint(50000, 300000, 5)
+forecast_data["Actual Revenue"] = np.random.randint(40000, 280000, 5)
+forecast_data["% Forecast vs Actual"] = np.round((forecast_data["Actual Revenue"] / forecast_data["Forecasted Revenue"]) * 100, 2)
+st.dataframe(forecast_data, use_container_width=True)
