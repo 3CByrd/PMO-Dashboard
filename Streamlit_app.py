@@ -45,7 +45,8 @@ def generate_activity_data(num_records, start_date, end_date):
         data.append({
             "Creation Date": np.random.choice(dates).strftime('%Y-%m-%d'),
             "PM": np.random.choice(pm_names),
-            "Market Tag": np.random.choice(market_tags)
+            "Market Tag": np.random.choice(market_tags),
+            "Opportunity Name": f"Client ({np.random.choice(['Toronto', 'Vancouver', 'Calgary'])}, {np.random.choice(['ON', 'BC', 'AB'])}) | {np.random.choice(['New Store', 'Renovation', 'Expansion'])}"
         })
     
     return pd.DataFrame(data)
@@ -66,72 +67,39 @@ opp_created = generate_activity_data(100, "2025-01-01", "2025-03-31")
 opp_lost = generate_activity_data(33, "2025-01-01", "2025-03-31")
 sales_orders = generate_sales_orders(90, "2025-01-01", "2025-03-31")
 
-# Filters
-pm_filter = st.selectbox("Filter by Project Manager", ["All"] + df["PM"].unique().tolist())
-if pm_filter != "All":
-    df = df[df["PM"] == pm_filter]
-
-# Display Project Table
-st.subheader("Project Data")
-st.dataframe(df, use_container_width=True)
-
-# Display Totals & Averages
-st.markdown("### Summary")
-total_revenue = df["Revenue"].sum()
-avg_gm = df["GM%"].mean()
-avg_wip = df["WIP%"].mean()
-avg_budget_spent = df["Budget Spent%"].mean()
-
-st.write(f"**Total Revenue:** ${total_revenue:,.2f}")
-st.write(f"**Average GM%:** {avg_gm:.2f}%")
-st.write(f"**Average WIP%:** {avg_wip:.2f}%")
-st.write(f"**Average Budget Spent%:** {avg_budget_spent:.2f}%")
-
-# Cashflow Projection Chart
-st.subheader("Cashflow Projection")
-df["Cashflow Date"] = pd.to_datetime(df["Cashflow Date"])
-df["Month"] = df["Cashflow Date"].dt.strftime('%Y-%m')
-cashflow_df = df.groupby("Month")["Revenue"].sum().reset_index()
-fig = px.bar(
-    cashflow_df, x="Month", y="Revenue", title="Projected Monthly Cashflow", 
-    labels={"Revenue": "Projected Revenue ($)"},
-    text_auto=True
-)
-fig.update_traces(textfont_size=12, textposition="outside")
-st.plotly_chart(fig, use_container_width=True)
-
-# Activity Section
+# Display Activity KPIs
 st.subheader("Activity KPIs")
+
 st.write("### Opportunities Created")
 st.dataframe(opp_created, use_container_width=True)
-fig = px.bar(opp_created, x="Creation Date", color="PM", title="Opportunities Created Per PM Per Month")
+fig = px.bar(opp_created, x=pd.to_datetime(opp_created["Creation Date"]).dt.strftime('%B'), y=opp_created.groupby("Creation Date")["PM"].count().values,
+             color="PM", barmode='group', title="Opportunities Created Per PM Per Month")
 st.plotly_chart(fig, use_container_width=True)
-fig = px.bar(opp_created, x="Creation Date", color="Market Tag", title="Opportunities Created Per Market Tag Per Month")
+fig = px.bar(opp_created, x=pd.to_datetime(opp_created["Creation Date"]).dt.strftime('%B'), y=opp_created.groupby("Creation Date")["Market Tag"].count().values,
+             color="Market Tag", barmode='group', title="Opportunities Created Per Market Tag Per Month")
 st.plotly_chart(fig, use_container_width=True)
 
 st.write("### Opportunities Lost")
 st.dataframe(opp_lost, use_container_width=True)
-fig = px.bar(opp_lost, x="Creation Date", color="PM", title="Opportunities Lost Per PM Per Month")
+fig = px.bar(opp_lost, x=pd.to_datetime(opp_lost["Creation Date"]).dt.strftime('%B'), y=opp_lost.groupby("Creation Date")["PM"].count().values,
+             color="PM", barmode='group', title="Opportunities Lost Per PM Per Month")
 st.plotly_chart(fig, use_container_width=True)
-fig = px.bar(opp_lost, x="Creation Date", color="Market Tag", title="Opportunities Lost Per Market Tag Per Month")
+fig = px.bar(opp_lost, x=pd.to_datetime(opp_lost["Creation Date"]).dt.strftime('%B'), y=opp_lost.groupby("Creation Date")["Market Tag"].count().values,
+             color="Market Tag", barmode='group', title="Opportunities Lost Per Market Tag Per Month")
 st.plotly_chart(fig, use_container_width=True)
 
 st.write("### Sales Orders Created")
 st.dataframe(sales_orders, use_container_width=True)
-fig = px.bar(sales_orders, x="Creation Date", y="Revenue", title="Sales Orders Created Per Month", text_auto=True)
+fig = px.bar(sales_orders, x=pd.to_datetime(sales_orders["Creation Date"]).dt.strftime('%B'), y=sales_orders["Revenue"].sum(),
+             title="Total Sales Orders Revenue Per Month", text_auto=True)
 st.plotly_chart(fig, use_container_width=True)
 
-# Financial Compliance Section
+# Financial Compliance
 st.subheader("Financial Compliance")
 financial_tasks = generate_activity_data(30, "2025-01-01", "2025-03-31")
 financial_tasks["Task Type"] = np.random.choice(["Invoice", "Vendor Bill", "Forecast", "Due Date", "Closing"], 30)
 st.dataframe(financial_tasks, use_container_width=True)
-fig = px.bar(financial_tasks, x="PM", title="Total Tasks Per PM")
+fig = px.bar(financial_tasks, x="PM", color="PM", title="Total Tasks Per PM")
 st.plotly_chart(fig, use_container_width=True)
-fig = px.bar(financial_tasks, x="Task Type", title="Total Tasks Per Task Type")
+fig = px.bar(financial_tasks, x="Task Type", color="Task Type", title="Total Tasks Per Task Type")
 st.plotly_chart(fig, use_container_width=True)
-
-# Revenue Forecast Section
-st.subheader("Revenue Forecast")
-forecast_data = generate_sales_orders(5, "2025-03-01", "2025-03-31")
-st.dataframe(forecast_data, use_container_width=True)
